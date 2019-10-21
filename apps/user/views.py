@@ -6,7 +6,11 @@ from django.views.generic import View
 import re
 
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import SignatureExpired#加解密类
 from django.conf import settings
+from django.core.mail import send_mail
+
+from celery_tasks.tasks import send_register_active_email
 
 # Create your views here.
 #user/register
@@ -106,17 +110,27 @@ class RegisterView(View):
         try:
             user = User.objects.create_user(username, email, password)
             user.is_active = 0
-            print('111111111111111111')
             user.save()
         except Exception as e:
             return render(request, 'register.html', {'errmsg': '用户注册失败，请重试'})
 
-        # 设置激活链接/user/active/user_id
+        # 设置激活链接/user/active/user_id,对用户信息进行加密并设置过期时间
         serializer = Serializer(settings.SECRET_KEY, 3600)
         info = {'confirm': user.id}
         token = serializer.dumps(info).decode('utf8')
 
+
         # 发邮件
+        # subject = '激活信息'
+        # msg = ''
+        # sender = settings.EMAIL_FROM
+        # recvier = [email]
+        # html_msg = '<h3>用户：%s你好，欢饮成为天天生鲜会员，请点击连接激活！<a href = "http://127.0.0.1:8000/user/active/%s">http://127.0.0.1:8000/user/active/%s</a></h3>'%(username,token,token)
+
+        #阻塞发送，用户体验不好，网站得使用异步执行任务，优化用户体验，使用celery
+        # send_mail(subject,msg,sender,recvier,html_message=html_msg)
+        # 使用celery发送
+        send_register_active_email.delay(email,username,token)
 
         # 返回结果, namespace=goods下面的name=index的视图函数
         return redirect(reverse('goods:index'))
@@ -144,6 +158,21 @@ class ActiveView(View):
         except SignatureExpired as e:
             # 激活链接一过期
             return HttpResponse('激活链接已经过期')
+
+class LoginView(View):
+    """登陆界面"""
+
+    def get(self, request):
+
+        # 判断是否已经记录了用户名
+        if 'username' in request.COOKIES:
+            username = request.COOKIES.get('username')
+            checked = 'checked'
+        else:
+            username = ''
+            checked = ''
+
+        return render(request, 'login.html', {'username': username, 'checked': checked})
 
 
 

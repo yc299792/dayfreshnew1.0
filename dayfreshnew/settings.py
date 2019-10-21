@@ -141,3 +141,11 @@ TINYMCE_DEFAULT_CONFIG = {
     'width': 600,
     'height': 400,
 }
+
+# qq POP3/SMTP 配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.163.com'#发邮件的服务器地址
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'yc299792@163.com' # 发邮件的邮箱
+EMAIL_HOST_PASSWORD = 'yc299792'  # 同上
+EMAIL_FROM = '天天生鲜<yc299792@163.com>' # 同上
