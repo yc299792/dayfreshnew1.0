@@ -33,5 +33,6 @@ def send_register_active_email(to_email, username, token):
     except Exception as e:
         print(e)
 
-    time.sleep(10)
+    time.sleep(5)
+
 

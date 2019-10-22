@@ -3,6 +3,7 @@ from user.models import *
 from django.http.response import HttpResponse
 from django.urls import reverse
 from django.views.generic import View
+from django.contrib.auth import authenticate,login
 import re
 
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
@@ -173,6 +174,78 @@ class LoginView(View):
             checked = ''
 
         return render(request, 'login.html', {'username': username, 'checked': checked})
+
+    def post(self,request):
+        """使用django内置的认证系统来处理认证和login后的记录登录状态到session"""
+
+        # 接收参数
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+        remember = request.POST.get('remember')
+
+        # 参数验证
+        if not all([username, password]):
+            # 参数不完整
+            return render(request, 'login.html', {'errmsg': '数据不完整'})
+
+        # 业务处理：用户注册，验证用户是否存在
+        # 业务处理:登录校验，使用自带的校验
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            # 用户名密码正确
+            if user.is_active:
+                # 用户已激活
+                # 记录用户的登录状态，这里自动设置session
+                login(request, user)
+
+                # 获取登录后所要跳转到的地址
+                # 默认跳转到首页
+                next_url = request.GET.get('next', reverse('goods:index'))
+
+                # 跳转到next_url
+                response = redirect(next_url)  # HttpResponseRedirect
+
+                # 判断是否需要记住用户名
+
+                if remember == 'on':
+                    # 记住用户名
+                    response.set_cookie('username', username, max_age=7 * 24 * 3600)
+                else:
+                    response.delete_cookie('username')
+
+                # 返回response
+                return response
+            else:
+                # 用户未激活
+                return render(request, 'login.html', {'errmsg': '账户未激活'})
+        else:
+            # 用户名或密码错误
+            return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
+
+# /user
+class UserInfoView(View):
+    """用户中心信息页"""
+
+    def get(self,request):
+        """显示"""
+        return render(request,'user_center_info.html')
+
+# /user/order
+class UserOrderView(View):
+    """用户中心订单页"""
+
+    def get(self, request):
+        """显示"""
+        return render(request, 'user_center_order.html')
+
+# /user/address
+class AddressView(View):
+    """用户中心订单页"""
+
+    def get(self, request):
+        """显示"""
+        return render(request, 'user_center_site.html')
+
 
 
 
