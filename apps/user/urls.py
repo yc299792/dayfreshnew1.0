@@ -12,5 +12,5 @@ urlpatterns = [
     url(r'^login$', LoginView.as_view(), name='login'),  # 登录
     url(r'^order$',UserOrderView.as_view(),name='order'),#订单
     url(r'^address$',AddressView.as_view(),name='address'),#地址
-    url(r'^$',UserInfoView.as_view(),name='info'),#信息
+    url(r'^$',UserInfoView.as_view(),name='user'),#信息
 ]

@@ -10,6 +10,8 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired#加解密类
 from django.conf import settings
 from django.core.mail import send_mail
+# from utils.Mixin import LoginRequiredMixin
+
 
 from celery_tasks.tasks import send_register_active_email
 
@@ -198,7 +200,7 @@ class LoginView(View):
                 # 记录用户的登录状态，这里自动设置session
                 login(request, user)
 
-                # 获取登录后所要跳转到的地址
+                # 获取登录后所要跳转到的地址,在登录后跳转，get函数可以设置默认值
                 # 默认跳转到首页
                 next_url = request.GET.get('next', reverse('goods:index'))
 
@@ -228,7 +230,7 @@ class UserInfoView(View):
 
     def get(self,request):
         """显示"""
-        return render(request,'user_center_info.html')
+        return render(request,'user_center_info.html',{'page':'user'})
 
 # /user/order
 class UserOrderView(View):
@@ -236,7 +238,7 @@ class UserOrderView(View):
 
     def get(self, request):
         """显示"""
-        return render(request, 'user_center_order.html')
+        return render(request, 'user_center_order.html',{'page':'order'})
 
 # /user/address
 class AddressView(View):
@@ -244,7 +246,7 @@ class AddressView(View):
 
     def get(self, request):
         """显示"""
-        return render(request, 'user_center_site.html')
+        return render(request, 'user_center_site.html',{'page':'address'})
 
 
 
