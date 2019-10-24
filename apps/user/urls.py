@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^order$',UserOrderView.as_view(),name='order'),#订单
     url(r'^address$',AddressView.as_view(),name='address'),#地址
     url(r'^$',UserInfoView.as_view(),name='user'),#信息
+    url(r'^logout$', LogoutView.as_view(), name='logout'),  # 注销登录
 ]

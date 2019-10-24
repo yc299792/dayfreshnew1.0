@@ -3,14 +3,14 @@ from user.models import *
 from django.http.response import HttpResponse
 from django.urls import reverse
 from django.views.generic import View
-from django.contrib.auth import authenticate,login
+from django.contrib.auth import authenticate,login,logout
 import re
 
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired#加解密类
 from django.conf import settings
 from django.core.mail import send_mail
-# from utils.Mixin import LoginRequiredMixin
+from utils.Mixin import LoginRequiredMixin
 
 
 from celery_tasks.tasks import send_register_active_email
@@ -225,15 +225,21 @@ class LoginView(View):
             return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
 
 # /user
-class UserInfoView(View):
+class UserInfoView(LoginRequiredMixin,View):
     """用户中心信息页"""
+
+    # LoginRequiredMixin的自定义扩展类中的login_required装饰器是配合当初的自带login()，登陆后存储session到cache中的
+    # 因为自己的user类是继承自自带的认证user类，所以每次请求都会存在一个request.user对象
+    # 登陆的话，request.user返回的是一个真实的user对象，否则返回的是一个anonymousUser对象
+    # 真实对象的is_authenticated方法返回的是true，匿名对象的这个方法返回的是false
+    # django自动会吧request.user对象返回给模板中，不需要手动传递，只需要在模板中调用user即可
 
     def get(self,request):
         """显示"""
         return render(request,'user_center_info.html',{'page':'user'})
 
 # /user/order
-class UserOrderView(View):
+class UserOrderView(LoginRequiredMixin,View):
     """用户中心订单页"""
 
     def get(self, request):
@@ -241,12 +247,78 @@ class UserOrderView(View):
         return render(request, 'user_center_order.html',{'page':'order'})
 
 # /user/address
-class AddressView(View):
+class AddressView(LoginRequiredMixin,View):
     """用户中心订单页"""
 
     def get(self, request):
         """显示"""
-        return render(request, 'user_center_site.html',{'page':'address'})
+        # 获取登录用户对应User对象
+        user = request.user
+        #
+        # # 数据库获取用户的默认和其他地址信息
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 不存在默认收货地址
+        #     address = None
+        address = Address.objects.get_default_address(user)
+
+        return render(request, 'user_center_site.html',{'page':'address','address':address})
+
+    def post(self,request):
+        """地址的添加"""
+        # 接收数据
+        receiver = request.POST.get('receiver')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        phone = request.POST.get('phone')
+
+        # 校验数据
+        if not all([receiver, addr, phone, type]):
+            return render(request, 'user_center_site.html', {'errmsg': '数据不完整'})
+
+        # 校验手机号
+        if not re.match(r'^1[3|4|5|7|8][0-9]{9}$', phone):
+            return render(request, 'user_center_site.html', {'errmsg': '手机格式不正确'})
+
+        # 业务处理：地址添加
+        # 如果用户已存在默认收货地址，添加的地址不作为默认收货地址，否则作为默认收货地址
+        # 获取登录用户对应User对象
+        user = request.user
+
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 不存在默认收货地址
+        #     address = None
+        address = Address.objects.get_default_address(user)
+
+        if address == None:
+            is_default = True
+        else:
+            is_default = False
+
+        # 添加地址
+        Address.objects.create(user=user,
+                               receiver=receiver,
+                               addr=addr,
+                               zip_code=zip_code,
+                               phone=phone,
+                               is_default=is_default)
+
+        # 返回应答,get方式刷新地址页面
+        return redirect(reverse('user:address'))
+
+
+class LogoutView(View):
+    """退出登录"""
+
+    def get(self, request):
+
+        # 自带logout方法清除session信息
+        logout(request)
+        # 跳转到首页
+        return redirect(reverse('goods:index'))
 
 
 
