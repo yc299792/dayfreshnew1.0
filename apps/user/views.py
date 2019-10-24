@@ -58,7 +58,6 @@ def register(request):
         try:
             user = User.objects.create_user(username, email, password)
             user.is_active = 0
-            print('111111111111111111')
             user.save()
         except Exception as e:
             return render(request, 'register.html', {'errmsg': '用户注册失败，请重试'})
@@ -192,7 +191,10 @@ class LoginView(View):
 
         # 业务处理：用户注册，验证用户是否存在
         # 业务处理:登录校验，使用自带的校验
+        user = User.objects.get(username=username)
+        print(user.username,user.password)
         user = authenticate(username=username, password=password)
+
         if user is not None:
             # 用户名密码正确
             if user.is_active:
@@ -236,14 +238,18 @@ class UserInfoView(LoginRequiredMixin,View):
 
     def get(self,request):
         """显示"""
-        return render(request,'user_center_info.html',{'page':'user'})
+        address = Address.objects.get_default_address(request.user)
+        return render(request,'user_center_info.html',{'page':'user','address':address})
 
 # /user/order
 class UserOrderView(LoginRequiredMixin,View):
     """用户中心订单页"""
 
+
     def get(self, request):
         """显示"""
+
+
         return render(request, 'user_center_order.html',{'page':'order'})
 
 # /user/address

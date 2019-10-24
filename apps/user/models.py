@@ -19,8 +19,9 @@ class AddressManager(models.Manager):
     def get_default_address(self, user):
         """获取用户默认收货地址"""
         try:
-            address = super().get(user=user, is_default=True)
-        except self.DoesNotExist:
+            address = self.get(user=user, is_default=True)
+        #     self.model代表继承模型管理器类的类就是objects.model
+        except self.model.DoesNotExist:
             # 不存在默认收货地址
             address = None
 
