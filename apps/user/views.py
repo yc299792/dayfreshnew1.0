@@ -12,6 +12,9 @@ from django.conf import settings
 from django.core.mail import send_mail
 from utils.Mixin import LoginRequiredMixin
 
+from django_redis import get_redis_connection
+
+from goods.models import GoodsSKU
 
 from celery_tasks.tasks import send_register_active_email
 
@@ -238,8 +241,30 @@ class UserInfoView(LoginRequiredMixin,View):
 
     def get(self,request):
         """显示"""
-        address = Address.objects.get_default_address(request.user)
-        return render(request,'user_center_info.html',{'page':'user','address':address})
+
+        # 获取用户的浏览记录
+        # from redis import StrictRedis
+        # sr = StrictRedis(host='172.16.179.130', port='6379', db=9)等价于下面的自带封装
+        user = request.user
+        address = Address.objects.get_default_address(user)
+
+        con = get_redis_connection('default')
+        history_key = 'history_%d' % user.id
+
+        # 获取用户最新浏览的5个商品的id
+        sku_ids = con.lrange(history_key, 0, 4)
+
+        # 根据sku_id查询商品的具体信息
+        goods_li = [GoodsSKU.objects.filter(id=id) for id in sku_ids]
+
+        # 组织上下文
+        context = {
+            'page': 'user',
+            'address': address,
+            'goods_li': goods_li
+        }
+
+        return render(request, 'user_center_info.html', context=context)
 
 # /user/order
 class UserOrderView(LoginRequiredMixin,View):
