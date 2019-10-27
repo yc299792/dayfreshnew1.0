@@ -1,12 +1,17 @@
-{% extends 'base.html' %}
+{% extends 'staticbase.html' %}
 {% load staticfiles  %}
 
 	<title>{% block title %}天天生鲜-首页{% endblock title %}</title>
 	{% block topfiles %}
-        <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/slide.js' %}"></script>
+        <script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/slide.js"></script>
     {% endblock topfiles %}
+
+
+
+
+
 {% block body %}
 	<div class="navbar_con">
 		<div class="navbar">
@@ -73,4 +78,24 @@
     {% endfor %}
 {% endblock body %}
 
+ {% block botoomfiles %}
+	<script type="text/javascript" src="js/slideshow.js"></script>
+	<script type="text/javascript">
+		BCSlideshow('focuspic');
+		var oFruit = document.getElementById('fruit_more');
+		var oShownum = document.getElementById('show_count');
 
+		var hasorder = localStorage.getItem('order_finish');
+
+		if(hasorder)
+		{
+			oShownum.innerHTML = '2';
+		}
+
+		oFruit.onclick = function(){
+			window.location.href = 'list.html';
+		}
+	</script>
+{% endblock botoomfiles %}
+</body>
+</html>

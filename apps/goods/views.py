@@ -62,3 +62,54 @@ class IndexView(View):
         context.update(cart_count=cart_count)
 
         return render(request, 'index.html', context=context)
+
+
+class DetailView(View):
+    """详情页"""
+    def get(self,request,goods_id):
+        """显示详情页"""
+        try:
+            sku = GoodsSKU.objects.get(id = goods_id)
+        except GoodsSKU.DoesNotExist:
+            #商品不存在
+            return redirect(reverse('goods:index'))
+
+
+        #获取商品分类
+        types = GoodsType.objects.all()
+
+        # 获取商品的评论信息,排除掉空评论的
+        sku_order = OrderGoods.objects.filter(sku=sku).exclude(comment='')
+        # 获取新品信息，排序降序，默认升序，再切片两个
+        new_skus = GoodsSKU.objects.filter(type=sku.type).order_by('-create_time')[:2]
+
+        # 获取同一spu下面的其他商品
+        same_spu_skus = GoodsSKU.objects.filter(goods=sku.goods).exclude(id=goods_id)
+
+        # 获取首页购物车的数目
+        cart_count = 0
+        if request.user.is_authenticated:
+            conn = get_redis_connection('default')
+            cart_key = 'cart_%s' % request.user.id
+            cart_count = conn.hlen(cart_key)
+
+            # 向用户浏览历史中添加
+            conn = get_redis_connection('default')
+            history_key = 'history_%s' % request.user.id
+            # 移除列表中的goods_id如果已经存在, 大于0表示从左移除几个，等于0表示移除所有存在的元素
+            conn.lrem(history_key, 0, goods_id)
+            # 左侧进行插入
+            conn.lpush(history_key, goods_id)
+            # 只保存用户最新浏览的5条数据
+            conn.ltrim(history_key, 0, 4)
+
+        context = {
+            'sku': sku,
+            'sku_order': sku_order,
+            'types': types,
+            'new_skus': new_skus,
+            'cart_count': cart_count,
+            'same_spu_skus': same_spu_skus,
+        }
+
+        return render(request, 'detail.html', context)
