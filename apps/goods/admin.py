@@ -2,7 +2,7 @@ from django.contrib import admin
 # Register your models here.
 from django.core.cache import cache
 
-from goods.models import GoodsType, IndexPromotionBanner, IndexGoodsBanner, IndexTypeGoodsBanner
+from goods.models import GoodsType, IndexPromotionBanner, IndexGoodsBanner, IndexTypeGoodsBanner,GoodsSKU,Goods
 
 
 class BaseModelAdmin(admin.ModelAdmin):
@@ -52,3 +52,6 @@ admin.site.register(GoodsType, GoodsTypeAdmin)
 admin.site.register(IndexGoodsBanner, IndexGoodsBannerAdmin)
 admin.site.register(IndexPromotionBanner, IndexPromotionBannerAdmin)
 admin.site.register(IndexTypeGoodsBanner, IndexTypeGoodsBannerAdmin)
+
+admin.site.register(Goods)
+admin.site.register(GoodsSKU)

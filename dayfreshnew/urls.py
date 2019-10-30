@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^user/',include('user.urls',namespace='user')),#用户模块
     url(r'^cart/',include('cart.urls',namespace='cart')),
+    url('search/', include('haystack.urls')),# 全文检索框架
     url(r'^order/',include('order.urls',namespace='order')),
     url(r'^tinymce/', include('tinymce.urls')),
     url(r'^', include('goods.urls',namespace='goods')), #放在最后匹配首页
