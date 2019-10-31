@@ -48,6 +48,9 @@ class Goods(BaseModel):
     # 富文本类型:带有格式的文本
     detail = HTMLField(blank=True, verbose_name='商品详情')
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         db_table = 'df_goods'
         verbose_name = '商品SPU'

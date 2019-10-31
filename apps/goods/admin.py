@@ -53,5 +53,5 @@ admin.site.register(IndexGoodsBanner, IndexGoodsBannerAdmin)
 admin.site.register(IndexPromotionBanner, IndexPromotionBannerAdmin)
 admin.site.register(IndexTypeGoodsBanner, IndexTypeGoodsBannerAdmin)
 
-admin.site.register(Goods)
-admin.site.register(GoodsSKU)
+admin.site.register(Goods,admin.ModelAdmin)
+admin.site.register(GoodsSKU,admin.ModelAdmin)
