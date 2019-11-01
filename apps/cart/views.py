@@ -16,7 +16,7 @@ class CartAddView(View):
     def post(self, request):
         # 接受数据
         user = request.user
-        if not user.is_authenticated():
+        if not user.is_authenticated:
             return JsonResponse({'res': 0, 'errmsg': '请先登录'})
 
         sku_id = request.POST.get('sku_id')
@@ -42,7 +42,7 @@ class CartAddView(View):
         cart_count = conn.hget(cart_key, sku_id)
 
         if cart_count:
-            count += cart_count
+            count += int(cart_count)
 
 
         # 验证商品的库存
