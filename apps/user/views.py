@@ -1,22 +1,23 @@
-from django.shortcuts import render,redirect
-from user.models import *
-from django.http.response import HttpResponse
-from django.urls import reverse
-from django.views.generic import View
-from django.contrib.auth import authenticate,login,logout
 import re
 
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from itsdangerous import SignatureExpired#加解密类
-from django.conf import settings
-from django.core.mail import send_mail
-from utils.Mixin import LoginRequiredMixin
-
+from django.contrib.auth import authenticate, login, logout
+from django.core.paginator import Paginator
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+# Create your views here.
+from django.urls import reverse
+from django.views import View
 from django_redis import get_redis_connection
-
-from goods.models import GoodsSKU
+from itsdangerous import SignatureExpired
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 from celery_tasks.tasks import send_register_active_email
+from dayfreshnew import settings
+from goods.models import GoodsSKU
+from order.models import OrderInfo, OrderGoods
+from user.models import User, Address
+from utils.Mixin import LoginRequiredMixin
+
 
 # Create your views here.
 #user/register
@@ -270,12 +271,63 @@ class UserInfoView(LoginRequiredMixin,View):
 class UserOrderView(LoginRequiredMixin,View):
     """用户中心订单页"""
 
+    def get(self, request,page):
 
-    def get(self, request):
-        """显示"""
+        user = request.user
 
+        # 数据库获取用户的订单信息,并进行降序排序，新订单最先显示
+        orders = OrderInfo.objects.filter(user=user).order_by('-create_time')
 
-        return render(request, 'user_center_order.html',{'page':'order'})
+        for order in orders:
+            order_skus = OrderGoods.objects.filter(order_id=order.order_id)
+
+            for order_sku in order_skus:
+                # 计算小计
+                amount = order_sku.count * order_sku.price
+                order_sku.amount = amount
+
+            # 保存单个订单商品的信息
+            order.status_name = OrderInfo.ORDER_STATUS[order.order_status]
+            order.order_skus = order_skus
+
+        # 进行分页
+        paginator = Paginator(orders, 1)
+
+        # 获取第page页的内容
+        try:
+            page = int(page)
+        except Exception as e:
+            page = 1
+
+        if page > paginator.num_pages:
+            page = 1
+
+        # 获取第page页的page对象，废弃因为会加载所有的页码
+        order_page = paginator.page(page)
+
+        # 控制限制的页码，只显示最多5个按钮
+        # 如果总页数小于5，显示[1-页码]
+        # 如果当前页是前三页，显示[1,2,3,4,5]
+        # 如果当前页是后三页，显示[4,5,6,7,8] num_pages-4 到num_oages+1
+        # 显示当前页，显示当前页的前两页和后两页 [2,3,4,5,6]
+
+        num_pages = paginator.num_pages
+        if num_pages < 5:
+            pages = range(1, num_pages + 1)
+        elif num_pages <= 3:
+            pages = range(1, 6)
+        elif num_pages - page <= 2:
+            pages = range(num_pages - 4, num_pages + 1)
+        else:
+            pages = range(page - 2, page + 3)
+
+        context = {
+            'order_page': order_page,
+            'pages': pages,
+            'page': 'order',
+        }
+
+        return render(request, 'user_center_order.html', context)
 
 # /user/address
 class AddressView(LoginRequiredMixin,View):

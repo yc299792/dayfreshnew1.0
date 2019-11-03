@@ -62,6 +62,7 @@
         })
         // 设置被选中的商品的总件数和总价格
         $('.settlements').find('em').text(total_price.toFixed(2))
+        {#console.log(total_count)#}
         $('.settlements').find('b').text(total_count)
     }
 
@@ -110,7 +111,7 @@
         csrf = $('input[name="csrfmiddlewaretoken"]').val()
         // 组织参数
         params = {'sku_id':sku_id, 'count':count, 'csrfmiddlewaretoken':csrf}
-        // 设置ajax请求为同步
+        // 设置ajax请求为同步，因为后续操作需要等待结果
         $.ajaxSettings.async = false
         // 发起ajax post请求，访问/cart/update, 传递参数:sku_id count
         // 默认发起的ajax请求都是异步的，不会等回调函数执行
