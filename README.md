@@ -25,7 +25,7 @@ README.md	add fruits-and-vegetables	6 months ago
 requirements.txt	add fruits-and-vegetables	6 months ago
  README.md
 fruits-and-vegetables
-基于python3.6和Django1.8.2
+基于python3.7和Django2.2.6
 
 使用Python Web框架Django开发的一个B2C网上蔬果商城，包含用户、商品、购物车、订单等模块等等，使用了Celery异步任务队列，MySQL数据库，Redis数据库，FastDFS分布式的图片存储服 务，Nginx负载均衡服务器，uWSGI应用服务器。
 
